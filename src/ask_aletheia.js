@@ -228,15 +228,23 @@ async function answerLLM(question, f, scenario) {
 }
 
 // ---------- UI wiring ----------
-export function initAskAletheia({ getContext }) {
-  const toggle = document.getElementById('askToggle');
-  const body = document.getElementById('askBody');
-  const log = document.getElementById('askLog');
-  const seedsWrap = document.getElementById('askSeeds');
-  const form = document.getElementById('askForm');
-  const input = document.getElementById('askInput');
-  const modeEl = document.getElementById('askMode');
-  const groundEl = document.getElementById('askGrounding');
+// `ids` lets a second, INDEPENDENT instance (e.g. the Operational Efficiency
+// dashboard) bind to its own duplicated drawer markup. Defaults preserve the
+// original Sustainability IDs verbatim, so existing callers are unaffected.
+export function initAskAletheia({ getContext, ids = {} }) {
+  const id = {
+    toggle: 'askToggle', body: 'askBody', log: 'askLog', seeds: 'askSeeds',
+    form: 'askForm', input: 'askInput', mode: 'askMode', grounding: 'askGrounding',
+    ...ids,
+  };
+  const toggle = document.getElementById(id.toggle);
+  const body = document.getElementById(id.body);
+  const log = document.getElementById(id.log);
+  const seedsWrap = document.getElementById(id.seeds);
+  const form = document.getElementById(id.form);
+  const input = document.getElementById(id.input);
+  const modeEl = document.getElementById(id.mode);
+  const groundEl = document.getElementById(id.grounding);
   if (!toggle || !body || !log || !form || !input) return { refresh() {} };
 
   if (modeEl) modeEl.textContent = LLM_ENABLED

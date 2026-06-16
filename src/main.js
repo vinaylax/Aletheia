@@ -10,9 +10,11 @@ import { facilities, statusFor, headlineFor, matrixStateFor } from './facilities
 import { initAskAletheia } from './ask_aletheia.js';
 import { openAssetDashboard } from './asset_security.js';
 import { assetSiteByNearest, assetSites } from './asset_security_adapter.js';
+import { initOperationalEfficiency, selectOperationalFacility } from './operational_efficiency.js';
 
 // Which pillar opened the shared compliance map. Determines what clicking a pin
-// does: 'sustainability' -> methane report; 'asset' -> Asset Security dashboard.
+// does: 'sustainability' -> methane report; 'asset' -> Asset Security dashboard;
+// 'operational' -> Operational Efficiency report (a copy of the sustainability one).
 let mapMode = 'sustainability';
 
 // --- THEME TOGGLE LOGIC ---
@@ -88,32 +90,41 @@ document.getElementById('btn-goto-asset')?.addEventListener('click', () => {
   navigateTo('view-map');
 });
 
+document.getElementById('btn-goto-operational')?.addEventListener('click', () => {
+  setMapMode('operational');
+  navigateTo('view-map');
+});
+
 // Switch the shared map between pillars: retitle the header and remember the mode
 // so the pin-click handler knows which dashboard to open.
 function setMapMode(mode) {
   mapMode = mode;
   const title = document.querySelector('#view-map .dashboard-header h1');
   if (title) {
-    title.textContent = mode === 'asset'
-      ? 'Asset Security — Site Map'
+    title.textContent = mode === 'asset' ? 'Asset Security — Site Map'
+      : mode === 'operational' ? 'Operational Efficiency — Site Map'
       : 'Aletheia Compliance Map';
   }
-  // The opacity panel + compliance side panel are Sustainability-specific; tuck
-  // them away in Asset Security mode so the shared map stays uncluttered.
+  // The opacity panel is Sustainability/Operational-specific (methane layers);
+  // tuck it away in Asset Security mode so the shared map stays uncluttered.
   const opacityPanel = document.querySelector('#view-map .opacity-panel');
   if (opacityPanel) opacityPanel.style.display = mode === 'asset' ? 'none' : '';
-  if (mode === 'asset') document.getElementById('compliance-panel')?.classList.add('hidden');
-  // The Asset Security workflow pane is asset-specific; hide it in Sustainability mode.
+  // Each pillar owns one right-pane panel; hide the two that don't belong to the
+  // active pillar so only the relevant one can appear on a pin click.
+  if (mode !== 'sustainability') document.getElementById('compliance-panel')?.classList.add('hidden');
   if (mode !== 'asset') document.getElementById('asset-workflow-panel')?.classList.add('hidden');
-  // Swap the pin set so each pillar's pins sit at its own coordinates.
-  if (typeof sustainabilityPins !== 'undefined' && typeof assetPins !== 'undefined') {
-    if (mode === 'asset') {
-      map.removeLayer(sustainabilityPins);
-      assetPins.addTo(map);
-    } else {
-      map.removeLayer(assetPins);
-      sustainabilityPins.addTo(map);
-    }
+  if (mode !== 'operational') document.getElementById('operational-panel')?.classList.add('hidden');
+  // Swap the pin set so each pillar's pins sit at its own coordinates. Only one
+  // layer is on the map at a time.
+  if (typeof sustainabilityPins !== 'undefined' && typeof assetPins !== 'undefined'
+      && typeof operationalPins !== 'undefined') {
+    [sustainabilityPins, assetPins, operationalPins].forEach(layer => {
+      if (map.hasLayer(layer)) map.removeLayer(layer);
+    });
+    const active = mode === 'asset' ? assetPins
+      : mode === 'operational' ? operationalPins
+      : sustainabilityPins;
+    active.addTo(map);
   }
 }
 
@@ -359,6 +370,10 @@ const PIN_COLOR = { green: '#2E5C45', amber: '#7A5A1E' };
 // Only one layer is on the map at a time; setMapMode() swaps them.
 const sustainabilityPins = L.layerGroup();
 const assetPins = L.layerGroup();
+// Operational Efficiency (pillar 01) reuses the SAME facilities data as
+// Sustainability — its pins sit at the same AOIs but open the Operational
+// Efficiency report (a copy of the Sustainability one) on click.
+const operationalPins = L.layerGroup();
 
 // --- Sustainability markers: the real AOIs from facilities.json, coloured by verdict ---
 facilities.forEach(f => {
@@ -388,8 +403,28 @@ assetSites.forEach(site => {
   marker.addTo(assetPins);
 });
 
-// Default to the Sustainability pin set; setMapMode() swaps in the asset pins.
+// --- Operational Efficiency markers: same AOIs as Sustainability (same data),
+// but a click opens the Operational Efficiency report instead. ---
+facilities.forEach(f => {
+  const fill = PIN_COLOR[statusFor(f.verdict).tone] || '#7A5A1E';
+  const marker = L.circleMarker([f.lat, f.lon], {
+    radius: 9, color: '#FFFFFF', weight: 3, fillColor: fill, fillOpacity: 1, className: 'aoi-pin'
+  });
+  marker.bindTooltip(`<b>${f.name}</b><br>${f.basisLabel}`);
+  marker.on('click', () => {
+    map.setView([f.lat, f.lon], f.isBasin ? 7 : 9, { animate: true });
+    selectOperationalFacility(f);
+  });
+  marker.addTo(operationalPins);
+});
+
+// Default to the Sustainability pin set; setMapMode() swaps in the asset /
+// operational pins.
 sustainabilityPins.addTo(map);
+
+// Wire the Operational Efficiency dashboard (panel + report + chat). Safe to call
+// here: module scripts are deferred, so its DOM already exists.
+initOperationalEfficiency();
 
 // (Basemap applied above via theme toggle logic)
 

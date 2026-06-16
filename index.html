@@ -80,12 +80,12 @@
                 <div class="fx-vignette"></div>
               </div>
               <div class="lslide-inner">
-                <span class="lblock-tag">coming soon</span>
+                <span class="lblock-tag lblock-tag--live">live</span>
                 <h2 class="lblock-title">Operational Efficiency</h2>
                 <p class="lblock-line">Throughput, supply-chain logistics, and refinery-capacity utilisation — monitored from orbit.</p>
-                <!-- FUTURE (not wired): optional per-panel "View example project" link →
-                     a case-study page, NEVER the app.
-                <a class="lblock-example" href="#">View example project →</a> -->
+                <div class="intro-actions">
+                  <button class="primary-btn js-login-btn">Enter platform</button>
+                </div>
               </div>
             </section>
 
@@ -197,12 +197,12 @@
                available (clickable) · coming-soon (visible, inert) · locked (no access). -->
           <div class="pillars-grid">
 
-            <div class="pillar-card is-soon" aria-disabled="true">
+            <button class="pillar-card is-available" id="btn-goto-operational">
               <div class="pillar-num">01</div>
               <h3>Operational Efficiency</h3>
               <p>Throughput, supply-chain logistics, and refinery-capacity utilisation.</p>
-              <span class="pillar-state state-soon">Coming soon</span>
-            </div>
+              <span class="pillar-state state-available">Open workspace →</span>
+            </button>
 
             <button class="pillar-card is-available" id="btn-goto-asset">
               <div class="pillar-num">02</div>
@@ -339,6 +339,32 @@
                 <span class="aw-btn-tag">Roadmap</span>
               </button>
             </div>
+          </div>
+        </aside>
+
+        <!-- Operational Efficiency — observe-step side panel (pillar 01).
+             A COPY of #compliance-panel above, with oe- prefixed IDs so the two
+             pillars stay independent. Reuses the global .side-panel styling. -->
+        <aside id="operational-panel" class="side-panel hidden">
+          <div class="panel-header">
+            <h2 id="oe-cp-name">Groundbirch</h2>
+            <button id="oe-cp-close" class="close-btn">&times;</button>
+          </div>
+          <div class="panel-content">
+            <div id="oe-cp-chips" class="meta-info" style="margin-bottom: 20px;"></div>
+
+            <h3 style="color: var(--ink-3); margin-bottom: 12px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;">AI insight summary</h3>
+            <div style="background: var(--inset); border: 1px solid var(--hairline); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <span id="oe-cp-status-dot" style="width: 14px; height: 14px; border-radius: 50%; background: var(--watch); display: inline-block;"></span>
+                <span id="oe-cp-status-word" style="font-family: var(--serif), serif; font-weight: 600; font-size: 19px; color: var(--ink);">—</span>
+              </div>
+              <p id="oe-cp-headline" style="margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.5;"></p>
+            </div>
+
+            <button id="oe-btn-open-report" style="width: 100%; padding: 13px; background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 14px; letter-spacing: 0.01em; cursor: pointer; transition: background 0.2s;">
+              ⛶ View full analysis report
+            </button>
           </div>
         </aside>
 
@@ -638,6 +664,205 @@
     </div>
   </div>
 
+  <!-- ===========================================================================
+       OPERATIONAL EFFICIENCY REPORT MODAL (pillar 01)
+       A COPY of #aletheia-report-modal above. Every internal id is `oe-` prefixed,
+       expanders use data-oe-expand (not data-expand) and the horizon toggle uses
+       .oe-hz-opt (not .hz-opt) so main.js's global [data-expand] / .hz-opt bindings
+       never touch this copy — operational_efficiency.js binds its own. All the
+       report's visual styling is class-based in aletheia.css and reused as-is.
+       =========================================================================== -->
+  <div id="operational-report-modal">
+    <button id="oe-btn-close-report" class="aletheia-close-btn">&times;</button>
+    <div id="operational-report-modal-content">
+      <div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-soft)" stroke-width="1.5"><circle cx="12" cy="12" r="3.2"/><path d="M12 1.6v3.2M12 19.2v3.2M1.6 12h3.2M19.2 12h3.2M4.7 4.7l2.3 2.3M17 17l2.3 2.3M19.3 4.7L17 7M7 17l-2.3 2.3"/></svg></div>
+      <div><h1>Aletheia</h1><div class="tag">Compliance verification · what disclosure conceals, satellites reveal</div></div>
+    </div>
+    <div class="sensors" aria-label="Observation sources">
+      <span class="chip"><i></i>TROPOMI · XCH₄</span><span class="chip"><i></i>TROPOMI · NO₂ / CO</span><span class="chip"><i></i>VIIRS · Nightfire</span><span class="chip"><i></i>ERA5 · wind</span>
+    </div>
+  </header>
+
+  <div class="facility">
+    <span class="name" id="oe-rep-name">—</span>
+    <span class="attn" id="oe-attn">—</span>
+    <span class="meta" id="oe-rep-operator">Operator <b>—</b></span>
+    <span class="meta" id="oe-rep-region">—</span>
+    <span class="meta" id="oe-rep-aoi">AOI <b>—</b></span>
+    <span class="updated" id="oe-rep-updated">Last fused: —</span>
+  </div>
+
+  <!-- VERDICT -->
+  <section class="lede">
+    <div class="badge"><span id="oe-badgeBar"></span>
+      <div class="state"><span class="dot" id="oe-badgeDot"></span><span class="word" id="oe-badgeWord">Watch</span></div>
+      <span class="sub" id="oe-badgeSub">—</span>
+    </div>
+    <div class="headline">
+      <div class="h-main" id="oe-rep-headline">—</div>
+    </div>
+  </section>
+
+  <!-- ===== STEP 3: three interpretation outputs in plain language ===== -->
+  <section class="interp">
+    <div class="interp-head">
+      <h2>What the satellites are telling us</h2>
+    </div>
+
+    <div class="icards">
+
+      <!-- OUTPUT 1 -->
+      <div class="card icard">
+        <div class="ic-verdict" id="oe-rep-o1-verdict">—</div>
+        <div class="ic-sub" id="oe-rep-o1-sub">—</div>
+
+        <div class="matrix" id="oe-rep-matrix" role="img" aria-label="Flare versus methane interpretation matrix; the highlighted cell shows the current state derived from the data">
+          <div class="mx-lbl"></div>
+          <div class="mx-lbl">Low methane</div>
+          <div class="mx-lbl">High methane</div>
+          <div class="mx-lbl row">Flare lit</div>
+          <div class="cell green" data-cell="flare-low"><span class="ct">Burning cleanly</span><span class="cd">efficient combustion</span></div>
+          <div class="cell amber" data-cell="flare-high"><span class="ct">Poor combustion</span><span class="cd">incomplete burn</span></div>
+          <div class="mx-lbl row">No flare</div>
+          <div class="cell gray" data-cell="noflare-low"><span class="ct">Site idle</span><span class="cd">genuinely inactive</span></div>
+          <div class="cell red" data-cell="noflare-high"><span class="ct">Venting / leak</span><span class="cd">or unlit flare</span></div>
+        </div>
+
+        <div class="ic-foot">
+          <button class="expander" data-oe-expand aria-expanded="false"><span class="chev">▸</span> How we read this</button>
+          <div class="ex-body">
+            Two signals, four outcomes:
+            <ul>
+              <li>Lit flare + low methane → operational, combusting efficiently.</li>
+              <li>Lit flare + high methane → operational, poor combustion.</li>
+              <li><b>No flare + high methane → venting, leak, or unlit flare.</b> ← current</li>
+              <li>No flare + no methane → site appears inactive.</li>
+            </ul>
+            Inputs: <code>VIIRS Nightfire</code> (flare) and <code>TROPOMI XCH₄</code> (methane column).
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTPUT 2 -->
+      <div class="card icard">
+        <div class="ic-verdict" id="oe-rep-o2-verdict">—</div>
+        <div class="ic-sub" id="oe-rep-o2-sub">—</div>
+
+        <div class="xind" id="oe-rep-xind"></div>
+        <div class="xconc" id="oe-rep-xconc">—</div>
+
+        <div class="ic-foot">
+          <button class="expander" data-oe-expand aria-expanded="false"><span class="chev">▸</span> How we read this</button>
+          <div class="ex-body">
+            NO₂ and CO are combustion co-pollutants retrieved by TROPOMI alongside methane. In principle they help disambiguate the methane signal:
+            <ul>
+              <li>NO₂↑ + CO↑ → active combustion, broad activity.</li>
+              <li>NO₂↑ + CO normal → lean (high-temp) combustion.</li>
+              <li>NO₂ normal + CO↑ → incomplete / low-temp combustion.</li>
+            </ul>
+            For this demo we report the <b>measured column values only</b>. Calling a value “elevated” needs a calibrated per-site baseline we don’t have yet, so we don’t — inventing one would breach our own honesty rule. Basin snapshots carry no NO₂/CO and show N/A.
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTPUT 3 -->
+      <div class="card icard">
+        <div class="ic-verdict" id="oe-rep-o3-verdict">—</div>
+        <div class="ic-sub" id="oe-rep-o3-sub">—</div>
+
+        <div class="ledger" id="oe-rep-readout"></div>
+        <div class="lagg" id="oe-rep-lagg"></div>
+
+        <div class="ic-foot">
+          <button class="expander" data-oe-expand aria-expanded="false"><span class="chev">▸</span> How we read this</button>
+          <div class="ex-body">
+            The metric is methane <b>concentration excess</b>, not intensity, and the comparison is observation vs a reference — <b>not</b> vs an operator disclosure (we have none yet):
+            <ul>
+              <li><b>Facility</b> — site CH₄ vs local background: <code>(site − background) / background × 100%</code>.</li>
+              <li><b>Basin</b> — target-region CH₄ vs a clean reference region: <code>(target − reference) / reference × 100%</code>.</li>
+            </ul>
+            Facility (vs local background) and basin (vs clean reference) are <b>different methods</b> — don’t read −0.1%, +0.6% and +2.4% as one ranked scale. Operator-reported / disclosure baselines are a separate future workstream and are not shown.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== Trajectory & decision layer ===== -->
+  <div class="sechead"><span class="eyebrow">Trajectory &amp; decision</span><h2>What it has been doing, and what to do next</h2><span class="sub">observed methane column · ppb</span></div>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-h"><span class="t">Trajectory</span><span class="s">rolling 12-month observed column · gaps = no cloud-free retrieval</span></div>
+      <div class="chartwrap">
+        <div class="hz-row" role="group" aria-label="Projection horizon">
+          <span class="hz-lbl">Projection horizon</span>
+          <div class="hz-toggle">
+            <button type="button" class="oe-hz-opt active" data-horizon="fixed" aria-pressed="true">12 mo</button>
+            <button type="button" class="oe-hz-opt" data-horizon="goal" aria-pressed="false">To goal year</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span><span class="ln obs"></span> Observed (satellite)</span>
+          <span><span class="ln proj"></span> Projection · illustrative status-quo extrapolation</span>
+          <span><span class="sw band"></span> Uncertainty band (scenario, not a prediction)</span>
+          <span><span class="ln bkgd"></span> Background · measured clean reference</span>
+          <span id="oe-lg-abated" hidden><span class="ln abated"></span> With selected levers</span>
+          <span id="oe-lg-target" hidden><span class="ln tgt"></span> Goal line (set by user)</span>
+        </div>
+        <div id="oe-chartbox"><canvas id="oe-chart"></canvas></div>
+        <div class="yend"><span class="k">Latest observed</span><span class="v" id="oe-yendVal">—</span><span class="note" id="oe-yendNote">most recent cloud-free month</span></div>
+
+        <!-- USER-ENTERED TARGET — the user's own goal line, NOT an operator disclosure -->
+        <div class="goalrow">
+          <label class="goal-lbl" for="oe-goalPct">Your reduction target</label>
+          <div class="goal-inputs">
+            <input id="oe-goalPct" class="num" type="number" min="0" max="100" step="5" placeholder="30" aria-label="percent reduction">
+            <span class="goal-unit">% by</span>
+            <input id="oe-goalYear" class="num" type="number" min="2026" max="2050" step="1" placeholder="2030" aria-label="target year">
+            <button id="oe-goalApply" class="goal-go" type="button">Plot goal</button>
+            <button id="oe-goalClear" class="goal-clear" type="button" hidden>Clear</button>
+          </div>
+          <span class="goal-cap" id="oe-goalCap">Default: −30% by 2030 · Global Methane Pledge. Goal line set by user · not an operator disclosure.</span>
+        </div>
+
+        <!-- PUBLISHED-QUANTIFICATION CALLOUT — cited from literature, NOT derived here -->
+        <div class="quant" id="oe-quantCallout"></div>
+      </div>
+    </div>
+
+    <div class="card ai">
+      <div class="card-h"><span class="t">AI actions</span><span class="s">agent-surfaced</span></div>
+
+      <div class="grp">Abatement levers · illustrative scenario</div>
+      <div class="lever-note">agent-surfaced · illustrative scenario. Toggling a lever bends the projection's <b>excess above background</b> downward by its efficacy — it does not change the observed record.</div>
+      <div class="bd" id="oe-abateActions"></div>
+      <div class="lever-foot">
+        <span id="oe-abateSummary" class="lever-sum">No levers active · status-quo</span>
+        <button id="oe-abateReset" class="lever-reset" type="button">Reset</button>
+      </div>
+
+      <div class="grp">Investigate now · verify severity</div>
+      <div class="bd" id="oe-verifyActions"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span id="oe-rep-footer">—</span>
+    <br><br>
+    Reference / benchmark sites built from public satellite data — not any operator’s private assets. Interpretation logic and reconciliation rules follow the Aletheia workflow. Drone example output: L. Chris Euranie ISU photogrammetry pipeline (DJI Neo · 4.56 M-point cloud).
+  </footer>
+</div>
+
+
+    </div>
+  </div>
+
   <!-- ===== Ask Aletheia — grounded, read-only chat (right-side drawer overlay) =====
        Kept as a direct child of <body>, OUTSIDE #aletheia-report-modal, so the modal's
        transform doesn't trap position:fixed and the drawer/FAB stay pinned to the viewport. -->
@@ -673,6 +898,43 @@
 
   <!-- Floating launcher — opens the Ask Aletheia drawer; hidden while the drawer is open -->
   <button class="ask-fab" id="askFab" type="button" aria-label="Open Ask Aletheia">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/><path d="M8.5 11h7M8.5 14h4"/></svg>
+  </button>
+
+  <!-- ===== Ask Aletheia (Operational Efficiency copy) — independent drawer/FAB,
+       oe- prefixed so it has its own state and never collides with the
+       Sustainability drawer above. Driven by operational_efficiency.js. ===== -->
+  <aside class="ask-drawer" id="oe-askPanel" aria-hidden="true">
+    <button class="ask-close" id="oe-askClose" type="button" aria-label="Close Ask Aletheia">&times;</button>
+    <button class="ask-toggle" id="oe-askToggle" aria-expanded="false" aria-controls="oe-askBody" type="button">
+      <span class="ask-tt">
+        <span class="ask-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/><path d="M8.5 11h7M8.5 14h4"/></svg>
+        </span>
+        <span class="ask-htxt">
+          <span class="ask-h">Ask Aletheia</span>
+          <span class="ask-s">grounded only in this facility's record · read-only, no live data</span>
+        </span>
+      </span>
+      <span class="chev" aria-hidden="true">⌄</span>
+    </button>
+    <div class="ask-body" id="oe-askBody" hidden>
+      <div class="ask-meta">
+        <span class="ask-mode" id="oe-askMode">Deterministic grounded mode · no network, no API key</span>
+        <span class="ask-grounding" id="oe-askGrounding">Grounded on: —</span>
+      </div>
+      <div class="ask-log" id="oe-askLog" role="log" aria-live="polite"></div>
+      <div class="ask-seeds" id="oe-askSeeds"></div>
+      <form class="ask-form" id="oe-askForm">
+        <input id="oe-askInput" class="ask-input" type="text" autocomplete="off"
+               placeholder="Ask about this facility…" aria-label="Ask Aletheia about this facility">
+        <button class="ask-send" type="submit">Ask</button>
+      </form>
+      <div class="ask-foot">Answers compose only from this facility's <b>pipeline/facilities.json</b> record + the scenario shown above. Aletheia screens with TROPOMI and recommends fine-sensor / drone confirmation — it never fetches live data or browses.</div>
+    </div>
+  </aside>
+
+  <button class="ask-fab" id="oe-askFab" type="button" aria-label="Open Ask Aletheia">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/><path d="M8.5 11h7M8.5 14h4"/></svg>
   </button>
 

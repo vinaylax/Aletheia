@@ -1,0 +1,44 @@
+/* operational_efficiency.css
+   Operational Efficiency dashboard (pillar 01) — a COPY of the Sustainability
+   facility dashboard. All of the report's internal styling is class-based and
+   lives globally in aletheia.css (.wrap, .icard, .matrix, .actioncard, .ask-*,
+   etc.), so it applies to this copy automatically. The only rules we need to
+   mirror are the handful that aletheia.css scopes by ID — re-pointed at the
+   `oe-`/`operational-` namespace so the two dashboards stay independent.
+
+   Sustainability's own rules in aletheia.css are left untouched. */
+
+/* Full-screen report modal wrapper (mirror of #aletheia-report-modal). */
+#operational-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--paper);
+  overflow-y: auto;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+#operational-report-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+#operational-report-modal-content { margin: 0; }
+
+/* Verdict accent bar (mirror of #badgeBar). */
+#oe-badgeBar { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--amber); transition: background .4s; }
+
+/* Trajectory chart box (mirror of #chartbox). */
+#oe-chartbox { position: relative; height: 352px; }
+@media (max-width: 920px) { #oe-chartbox { height: 300px; } }
+
+/* Projection-horizon toggle (mirror of .hz-opt). The copy uses .oe-hz-opt instead
+   of .hz-opt so main.js's global `.hz-opt` click binding never touches it — the
+   module binds .oe-hz-opt itself. .hz-row / .hz-lbl / .hz-toggle are class-only
+   (no JS binding) and reused from aletheia.css. */
+.oe-hz-opt { font-family: var(--body); font-size: 12px; color: var(--muted); background: transparent; border: 0; padding: 5px 11px; cursor: pointer; }
+.oe-hz-opt + .oe-hz-opt { border-left: 1px solid var(--line); }
+.oe-hz-opt.active { background: var(--text); color: var(--paper); font-weight: 600; }
+.oe-hz-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
