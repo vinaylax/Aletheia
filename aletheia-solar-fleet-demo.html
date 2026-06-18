@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aletheia — Solar fleet efficiency</title>
+<style>
+  :root{
+    --bg:#f1efe8; --card:#ffffff; --ink:#23241f; --ink2:#5f5e57; --ink3:#8d8b80;
+    --line:rgba(35,36,31,0.10); --line2:rgba(35,36,31,0.16);
+    --green:#2f5d4d; --greenl:#e3efe9; --teal:#3a7c66; --gold:#9a7a30; --goldl:#f5ecd6;
+    --amber:#b8923f; --red:#c0512e; --redl:#f7e6df; --blue:#3f78a8;
+    --serif:Georgia,Cambria,'Times New Roman',serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 22px;background:var(--card);border-bottom:0.5px solid var(--line);flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .nm{font-family:var(--serif);font-size:19px}
+  .mock{font-family:var(--mono);font-size:10.5px;color:var(--gold);background:var(--goldl);
+    border:0.5px solid rgba(154,122,48,0.3);border-radius:999px;padding:4px 11px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .tag{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:var(--card);
+    border:0.5px solid var(--line);border-radius:999px;padding:4px 10px}
+  .tag .d{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin-right:6px;vertical-align:1px}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px}
+  .modeseg{display:inline-flex;background:var(--card);border:0.5px solid var(--line2);border-radius:999px;padding:3px;margin-bottom:18px}
+  .modebtn{appearance:none;border:none;background:transparent;font-family:var(--sans);font-size:13px;color:var(--ink2);padding:8px 18px;border-radius:999px;cursor:pointer}
+  .modebtn.on{background:var(--green);color:#eef3ee}
+  .lead{font-size:13.5px;color:var(--ink2);margin:0 0 16px;max-width:76ch;line-height:1.55}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  .kpi{background:var(--card);border:0.5px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi .l{font-size:12px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px}
+  .kpi .v{font-size:24px;font-family:var(--serif);margin-top:6px}
+  .kpi .v small{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+
+  .main{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}
+  .panel{background:var(--card);border:0.5px solid var(--line);border-radius:12px;overflow:hidden}
+  .ph{padding:14px 16px;border-bottom:0.5px solid var(--line)}
+  .ph h2{font-family:var(--serif);font-size:17px;font-weight:400;margin:0}
+  .ph p{margin:3px 0 0;font-size:12px;color:var(--ink3)}
+
+  /* OE fleet */
+  .row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:12px 16px;border-bottom:0.5px solid var(--line);cursor:pointer;transition:background .12s}
+  .row:last-child{border-bottom:none}.row:hover{background:#faf9f4}.row.sel{background:var(--greenl)}
+  .row .nm{font-size:14px;font-weight:500}.row .meta{font-size:11.5px;color:var(--ink3);font-family:var(--mono);margin-top:2px}
+  .row .right{text-align:right}.row .loss{font-family:var(--mono);font-size:15px;color:var(--red)}.row .loss.ok{color:var(--teal)}
+  .pill{font-family:var(--mono);font-size:10px;letter-spacing:0.4px;padding:3px 9px;border-radius:999px;white-space:nowrap;display:inline-block;margin-top:4px}
+  .pill.OK{color:var(--teal);background:var(--greenl);border:0.5px solid rgba(58,124,102,0.3)}
+  .pill.Clean{color:var(--gold);background:var(--goldl);border:0.5px solid rgba(154,122,48,0.3)}
+  .pill.Realign{color:#2f5f86;background:#e6eef5;border:0.5px solid rgba(63,120,168,0.3)}
+  .pill.Service{color:var(--red);background:var(--redl);border:0.5px solid rgba(192,81,46,0.3)}
+  .sitehead{padding:14px 16px;border-bottom:0.5px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .sitehead .nm{font-family:var(--serif);font-size:18px}.sitehead .meta{font-size:11.5px;color:var(--ink3);font-family:var(--mono);margin-top:2px}
+  .sumchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .sumchip{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:var(--bg);border:0.5px solid var(--line);border-radius:999px;padding:3px 9px}
+  .cost{margin:14px 16px 0;padding:13px 14px;background:var(--greenl);border:0.5px solid rgba(58,124,102,0.25);border-radius:11px}
+  .cost .costh{font-family:var(--mono);font-size:10px;letter-spacing:0.6px;text-transform:uppercase;color:var(--green);margin-bottom:11px;display:flex;justify-content:space-between}
+  .cost .costh .vs{color:var(--ink3)}.cost3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .cstat .cl{font-size:11px;color:var(--ink3);font-family:var(--mono)}.cstat .cv{font-family:var(--serif);font-size:20px;color:var(--green);margin:3px 0 1px;line-height:1.1}.cstat .cs{font-size:10.5px;color:var(--ink3)}
+  .costcap{margin-top:11px;font-size:12.5px;color:var(--ink2);line-height:1.5}
+  .layers{display:flex;gap:6px;padding:14px 16px 0;flex-wrap:wrap}
+  .lyr{appearance:none;font-family:var(--mono);font-size:11px;color:var(--ink2);background:var(--bg);border:0.5px solid var(--line2);border-radius:7px;padding:6px 12px;cursor:pointer}
+  .lyr.on{background:var(--green);color:#eef3ee;border-color:var(--green)}.lyr.ground.on{background:var(--gold);border-color:var(--gold)}.lyr.fused{font-weight:500}
+  .lyrsep{width:1px;background:var(--line2);margin:2px 4px}.lyrhint{font-size:11.5px;color:var(--ink3);padding:8px 16px 0;min-height:18px}
+  .gridwrap{padding:14px 16px}
+  .pvframe{background:#11150f;border-radius:9px;padding:9px;border:0.5px solid rgba(0,0,0,0.25)}
+  .pvgrid{display:grid;gap:4px}
+  .cell{aspect-ratio:1;border-radius:2px;cursor:pointer;transition:transform .1s;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9.5px;font-weight:500;color:#15160f;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.16), inset 0 -2px 3px rgba(0,0,0,0.12);
+    background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.06) 0 1px,transparent 1px 8px),repeating-linear-gradient(0deg,rgba(0,0,0,0.14) 0 1px,transparent 1px 8px)}
+  .cell:hover{transform:scale(1.16);z-index:2}
+  .cell.flag{box-shadow:inset 0 0 0 1px rgba(255,255,255,0.45), inset 0 -2px 3px rgba(0,0,0,0.18)}
+  .cell.active{outline:2px solid #fff;outline-offset:1px;z-index:3}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.sw{width:12px;height:12px;border-radius:3px}
+  .verdict{border-top:0.5px solid var(--line);padding:14px 16px}
+  .verdict .pre{font-family:var(--mono);font-size:10.5px;letter-spacing:0.6px;text-transform:uppercase;color:var(--ink3)}
+  .verdict .fchip{float:right;font-family:var(--mono);font-size:9.5px;color:var(--teal);background:var(--greenl);border:0.5px solid rgba(58,124,102,0.3);border-radius:999px;padding:3px 9px}
+  .verdict h3{font-family:var(--serif);font-weight:400;font-size:17px;margin:5px 0 10px}
+  .vline{display:grid;grid-template-columns:148px 1fr;gap:10px;padding:7px 0;border-top:0.5px solid var(--line);font-size:13px}
+  .vline .src{font-family:var(--mono);font-size:11px}.vsrc.opt{color:var(--teal)}.vsrc.th{color:var(--blue)}.vsrc.gr{color:var(--gold)}
+  .vact{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--greenl);border:0.5px solid rgba(58,124,102,0.25);font-size:13.5px;color:var(--green)}.vact b{font-weight:500}
+  .empty{padding:26px 16px;color:var(--ink3);font-size:13px;text-align:center;border-top:0.5px solid var(--line)}
+
+  /* AS time-lapse */
+  .viewer{padding:14px 16px}
+  .scene-wrap{border-radius:9px;overflow:hidden;border:0.5px solid rgba(0,0,0,0.3);background:#0d0f0c;line-height:0}
+  .scene-wrap svg{width:100%;height:auto;display:block}
+  .caption{margin-top:12px;display:flex;align-items:baseline;gap:12px}
+  .caption .yr{font-family:var(--serif);font-size:26px}
+  .caption .cx{font-size:13px;color:var(--ink2)}
+  .timeline{margin-top:14px;position:relative}
+  .tlbar{height:2px;background:var(--line2);position:absolute;left:8px;right:8px;top:9px}
+  .tlfill{height:2px;background:var(--teal);position:absolute;left:8px;top:9px;transition:width .25s}
+  .ticks{display:flex;justify-content:space-between;position:relative}
+  .ytick{appearance:none;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0;flex:1}
+  .ytick .dot{width:11px;height:11px;border-radius:50%;background:var(--card);border:1.5px solid var(--line2)}
+  .ytick.on .dot{background:var(--teal);border-color:var(--teal)}
+  .ytick.built .dot{box-shadow:0 0 0 3px rgba(154,122,48,0.25)}
+  .ytick .yl{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+  .ytick.on .yl{color:var(--ink)}
+  .playrow{margin-top:16px;display:flex;align-items:center;gap:12px}
+  .playbtn{appearance:none;font-family:var(--mono);font-size:12px;color:#eef3ee;background:var(--green);border:none;border-radius:8px;padding:9px 16px;cursor:pointer}
+  .asmock{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+  .changes{padding:6px 0}
+  .chg{display:grid;grid-template-columns:54px 1fr;gap:10px;padding:11px 16px;border-bottom:0.5px solid var(--line);opacity:.4;transition:opacity .2s}
+  .chg:last-child{border-bottom:none}
+  .chg.shown{opacity:1}
+  .chg.cur{background:var(--greenl)}
+  .chg .cy{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+  .chg .ct{font-size:13px;color:var(--ink2);line-height:1.4}
+  .chg .lv{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.4px;padding:2px 7px;border-radius:999px;margin-top:5px}
+  .lv.base{color:var(--ink3);background:var(--bg);border:0.5px solid var(--line)}
+  .lv.info{color:var(--teal);background:var(--greenl);border:0.5px solid rgba(58,124,102,0.3)}
+  .lv.major{color:var(--gold);background:var(--goldl);border:0.5px solid rgba(154,122,48,0.3)}
+  .lv.review{color:var(--red);background:var(--redl);border:0.5px solid rgba(192,81,46,0.3)}
+
+  .note{max-width:1180px;margin:16px auto 30px;padding:0 22px;font-family:var(--mono);font-size:11px;color:var(--ink3);line-height:1.6}
+  [hidden]{display:none!important}
+  @media(max-width:880px){.main{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">
+    <svg width="44" height="24" viewBox="0 0 200 110" aria-hidden="true"><g fill="none" stroke="#23241f" stroke-width="2.4" stroke-linecap="round"><line x1="8" y1="36" x2="104" y2="60"/><line x1="8" y1="60" x2="192" y2="60"/><line x1="8" y1="82" x2="104" y2="60"/><line x1="112" y1="14" x2="96" y2="104"/><line x1="112" y1="14" x2="140" y2="104"/></g><circle cx="104" cy="60" r="4.5" fill="#23241f"/></svg>
+    <div class="nm">Solar fleet efficiency</div>
+  </div>
+  <span class="mock">Illustrative · mock data</span>
+</div>
+
+<div class="wrap">
+  <div class="modeseg" role="tablist">
+    <button class="modebtn on" id="m-oe" role="tab">Operational efficiency</button>
+    <button class="modebtn" id="m-as" role="tab">Asset security</button>
+  </div>
+
+  <!-- ================= OPERATIONAL EFFICIENCY ================= -->
+  <section id="oe">
+    <div class="tags">
+      <span class="tag"><span class="d"></span>optical · mirrors</span>
+      <span class="tag"><span class="d" style="background:#3f78a8"></span>thermal · receiver flux</span>
+      <span class="tag"><span class="d" style="background:#9a7a30"></span>receiver / HTF data</span>
+    </div>
+    <p class="lead">In solar thermal, heat is the product — not the fault. Satellite reads mirror soiling, field aim and receiver flux across the whole plant weekly, so wash-and-realign crews only go where the data points. The decision shifts from clean / claim / repair to clean / realign / service, but the cost logic is the same: target the crews, walk less of the field.</p>
+    <div class="kpis" id="kpis"></div>
+    <div class="main">
+      <div class="panel">
+        <div class="ph"><h2>Fleet — ranked by recoverable loss</h2><p>Weekly satellite screen, reconciled to receiver / HTF data · select a plant</p></div>
+        <div id="fleet"></div>
+      </div>
+      <div class="panel" id="detail"></div>
+    </div>
+    <div class="note" id="oenote"></div>
+  </section>
+
+  <!-- ================= ASSET SECURITY ================= -->
+  <section id="as" hidden>
+    <div class="tags">
+      <span class="tag"><span class="d"></span>optical basemaps</span>
+      <span class="tag"><span class="d" style="background:#3f78a8"></span>change detection</span>
+      <span class="tag"><span class="d" style="background:#9a7a30"></span>boundary &amp; integrity</span>
+    </div>
+    <p class="lead">Asset security from orbit isn't a single snapshot — it's the record over time. Aletheia compares each satellite pass against the last to see what physically changed on a site: construction, footprint growth, new structures, and disturbance beyond the permitted boundary. Scrub the years, or press play, to watch this plant built out from bare land to a working solar farm — and see what the change-detection layer flags along the way.</p>
+    <div class="kpis" id="asstats"></div>
+    <div class="main">
+      <div class="panel">
+        <div class="ph"><h2>Site monitoring — build-out over time</h2><p>Kutch Solar Park · Gujarat, IN · annual satellite basemaps, 2018–2025</p></div>
+        <div class="viewer">
+          <div class="scene-wrap" id="scene"></div>
+          <div class="caption"><span class="yr" id="ascapyr"></span><span class="cx" id="ascaptx"></span></div>
+          <div class="timeline">
+            <div class="tlbar"></div><div class="tlfill" id="tlfill"></div>
+            <div class="ticks" id="ticks"></div>
+          </div>
+          <div class="playrow"><button class="playbtn" id="play">▶ Play 2018 → 2025</button><span class="asmock">illustrative · synthetic imagery, not a real basemap</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>Detected changes</h2><p>Automated change detection vs the previous pass</p></div>
+        <div class="changes" id="changes"></div>
+      </div>
+    </div>
+    <div class="note">Illustrative demonstration · the imagery is a stylised, synthetic reconstruction, not a real satellite basemap. The product is the change-detection logic — comparing each pass to the last, quantifying footprint growth, and flagging structures or disturbance that don't match the record. In production this runs on licensed annual basemaps; every flag is human-verified before it drives a response, and high-stakes calls are confirmed against ground truth.</div>
+  </section>
+</div>
+
+<script>
+/* ---------------- OPERATIONAL EFFICIENCY (solar-thermal fleet) ---------------- */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+const SITES=[
+  {id:'noor',name:'Noor Tower',loc:'Ouarzazate, MA',type:'tower',mw:150,pr:71,loss:8.0,cause:'mis-track',status:'Realign',recover:'~4.2 MWh-th/day',seed:101,extra:'Receiver flux 88% even · 2 cold sectors',
+    flags:{ '20':{cause:'mistrack',action:'Realign',label:'Heliostat group H-21',dev:-14,kwh:'recover ~2.1 MWh-th/day (with H-22)',opt:'Mirrors clean — canting / aim looks off',th:'Cold sector on the receiver — energy landing off-target',gr:'Receiver flux 6% below expected on this cluster',act:'Realign / recalibrate tracking. This is not a wash.'},
+            '21':{cause:'mistrack',action:'Realign',label:'Heliostat group H-22',dev:-11,kwh:'recover with H-21',opt:'Clean mirrors',th:'Adjacent cold sector on receiver',gr:'Flux down, same cluster',act:'Recalibrate tracking together with H-21.'},
+            '40':{cause:'soiling',action:'Clean',label:'Heliostat group H-41',dev:-7,kwh:'recover ~1.4 MWh-th/day',opt:'Visible dust film across the mirrors',th:'Mild uniform flux drop',gr:'Reflectance down ~7%',act:'Wash the mirror group.'} } },
+  {id:'cerro',name:'Cerro Dominador',loc:'Atacama, CL',type:'tower',mw:110,pr:74,loss:6.5,cause:'receiver',status:'Service',recover:'protect receiver',seed:117,extra:'Receiver hotspot · north panel',
+    flags:{ '15':{cause:'receiver',action:'Service',label:'Receiver panel R-N',dev:-22,kwh:'protect receiver · restore output',opt:'Field looks clean and well aimed',th:'Sharp hotspot on the receiver structure',gr:'Receiver metal temperature above safe band',act:'Service — inspect tubes; defocus the affected heliostats now.'} } },
+  {id:'solnova',name:'Solnova Troughs',loc:'Seville, ES',type:'trough',mw:50,pr:76,loss:5.5,cause:'soiling',status:'Clean',recover:'~1.6 MWh-th/day',seed:131,extra:'HTF outlet near setpoint',
+    flags:{ '28':{cause:'soiling',action:'Clean',label:'Collector loop L-29',dev:-9,kwh:'recover ~1.6 MWh-th/day',opt:'Dust on the trough mirrors, full row',th:'HTF outlet cooler along the loop',gr:'Loop outlet 9°C below setpoint',act:'Wash the loop mirrors.'} } },
+  {id:'andasol',name:'Andasol Plains',loc:'Granada, ES',type:'trough',mw:50,pr:79,loss:4.0,cause:'receiver',status:'Service',recover:'restore loop',seed:148,extra:'HTF joint suspected · L-12',
+    flags:{ '11':{cause:'receiver',action:'Service',label:'Collector loop L-12',dev:-12,kwh:'restore loop output',opt:'Mirrors clean',th:'Cold break mid-loop — fluid not heating past the joint',gr:'Loop outlet flat despite full irradiance',act:'Service — inspect HTF joint / vacuum loss on the receiver tube.'} } },
+  {id:'khi',name:'Khi Tower',loc:'Upington, ZA',type:'tower',mw:50,pr:88,loss:1.8,cause:'none material',status:'OK',recover:'—',seed:160,extra:'Receiver flux even',flags:{}}
+];
+const GW=12, GH=6, N=GW*GH;
+SITES.forEach(function(s){
+  const r=rng(s.seed); const cells=[];
+  for(let i=0;i<N;i++){ cells.push({perf:0.92+r()*0.07, dev:-2+r()*3, flag:null}); }
+  Object.keys(s.flags).forEach(function(k){
+    const i=+k, f=s.flags[k]; cells[i].flag=f; cells[i].dev=f.dev;
+    cells[i].perf = f.cause==='receiver'?0.5+r()*0.1 : f.cause==='mistrack'?0.7+r()*0.05 : 0.74+r()*0.05;
+  });
+  s.cells=cells;
+});
+let layer='fused', curSite=null, curCell=null;
+const totalSeg=SITES.length*N, flaggedSeg=SITES.reduce((a,s)=>a+s.cells.filter(c=>c.flag).length,0), avoided=Math.round((1-flaggedSeg/totalSeg)*100);
+document.getElementById('kpis').innerHTML=
+  kpi('Segments to inspect',flaggedSeg+' <small>of '+totalSeg+'</small>')+kpi('Field sweep avoided','~'+avoided+' <small>%</small>')+
+  kpi('Recoverable','~14 <small>MWh-th/day</small>')+kpi('Wasted dispatches','0 <small>right action first</small>');
+function kpi(l,v){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>';}
+const ranked=[...SITES].sort((a,b)=>b.loss-a.loss);
+document.getElementById('fleet').innerHTML=ranked.map(function(s){
+  const ok=s.status==='OK';
+  return '<div class="row" data-id="'+s.id+'"><div><div class="nm">'+s.name+'</div><div class="meta">'+s.loc+' · '+s.type+' · '+s.mw+' MW · eff '+s.pr+'%</div>'+
+    '<span class="pill '+s.status+'">'+(ok?'No action':s.status+' · '+s.cause)+'</span></div>'+
+    '<div class="right"><div class="loss'+(ok?' ok':'')+'">'+(ok?'\u2014':'-'+s.loss.toFixed(1)+'%')+'</div><div class="meta">'+(ok?'nominal':'vs expected')+'</div></div></div>';
+}).join('');
+document.querySelectorAll('#fleet .row').forEach(r=>r.onclick=function(){selectSite(r.dataset.id);});
+function colorFor(c){
+  if(layer==='fused'){ if(!c.flag) return '#3a7c66'; const x=c.flag.cause; return x==='soiling'?'#caa54a':x==='mistrack'?'#4a78a8':'#c0512e'; }
+  if(layer==='optical'){ if(!c.flag) return '#3b5566'; const x=c.flag.cause; return x==='soiling'?'#caa54a':x==='mistrack'?'#6a86a0':'#3b5566'; }
+  if(layer==='thermal'){ if(!c.flag) return '#3a7c66'; const x=c.flag.cause; return x==='soiling'?'#caa54a':x==='mistrack'?'#5b8fc4':'#c0512e'; }
+  const d=c.dev; return d>=-2?'#3a7c66':d>=-5?'#e7d39a':d>=-10?'#caa54a':d>=-20?'#cf7a3a':'#c0512e';
+}
+function cellVal(c){ if(layer!=='ground') return ''; if(c.dev<=-50) return 'OFF'; if(c.dev<=-4) return '\u2212'+Math.abs(Math.round(c.dev)); return ''; }
+const LAYERS=['fused','optical','thermal','ground'];
+const LLABEL={fused:'Fused',optical:'Optical',thermal:'Thermal',ground:'Ground'};
+const HINT={fused:'Every input reconciled into one action per segment — clean, realign or service.',
+  optical:'Optical sees mirror soiling and gross mis-alignment across the field.',
+  thermal:'Thermal reads <em>receiver flux and aim</em> — an even, intense target means the field is hitting its mark; cold patches mean mirrors missing it.',
+  ground:'Receiver / HTF temperature vs expected — the thermal truth that <em>proves</em> the picture.'};
+function cstat(l,v,s){return '<div class="cstat"><div class="cl">'+l+'</div><div class="cv">'+v+'</div><div class="cs">'+s+'</div></div>';}
+function costHTML(s,fN){
+  const pctVisit=Math.round(fN/N*100), av=100-pctVisit; const unit=s.type==='trough'?'loops':'heliostat groups';
+  const visited=fN? fN+' of '+N:'0 of '+N; const recov=fN? s.recover:'none lost';
+  const cap=fN? 'Crews routed only to the flagged '+unit+', each with the right action — clean, realign or service. The rest of the field is never visited, and no trip is wasted on the wrong fix.'
+    : 'The weekly satellite screen clears the plant — a full blind sweep avoided this cycle, zero truck-rolls, nothing to recover.';
+  return '<div class="cost"><div class="costh"><span>Operating-cost impact · this week</span><span class="vs">targeted vs blind sweep</span></div>'+
+    '<div class="cost3">'+cstat('Segments visited',visited,'blind sweep = all '+N)+cstat('Field sweep avoided','~'+av+'%','no crew to the rest')+
+    cstat('Recovered',recov,fN?'caught weeks sooner':'screen clears it')+'</div><div class="costcap">'+cap+'</div></div>';
+}
+function selectSite(id){ curSite=SITES.find(s=>s.id===id); curCell=null;
+  document.querySelectorAll('#fleet .row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id)); renderDetail(); }
+function renderDetail(){
+  const s=curSite, fN=s.cells.filter(c=>c.flag).length;
+  const chips='<span class="sumchip">'+(fN? fN+' flagged · recover '+s.recover:'all nominal · no action')+'</span>'+(s.extra?'<span class="sumchip">'+s.extra+'</span>':'');
+  const lyrs=LAYERS.map(function(l,idx){ const sep=(idx===1)?'<div class="lyrsep"></div>':''; const extra=(l==='fused'?'fused':l==='ground'?'ground':'');
+    return sep+'<button class="lyr '+extra+(layer===l?' on':'')+'" data-l="'+l+'">'+LLABEL[l]+'</button>'; }).join('');
+  document.getElementById('detail').innerHTML=
+    '<div class="sitehead"><div><div class="nm">'+s.name+'</div><div class="meta">'+s.loc+' · '+s.type+' · '+s.mw+' MW · eff '+s.pr+'% · last screen 6 days ago</div>'+
+      '<div class="sumchips">'+chips+'</div></div><span class="pill '+s.status+'">'+(s.status==='OK'?'No action':s.status)+'</span></div>'+
+    costHTML(s,fN)+'<div class="layers">'+lyrs+'</div><div class="lyrhint" id="hint"></div>'+
+    '<div class="gridwrap"><div class="pvframe"><div class="pvgrid" id="pv" style="grid-template-columns:repeat('+GW+',1fr)"></div></div><div class="legend" id="legend"></div></div><div id="vbox"></div>';
+  document.querySelectorAll('#detail .lyr').forEach(b=>b.onclick=function(){layer=b.dataset.l;paintGrid();});
+  paintGrid(); renderVerdict();
+}
+function paintGrid(){
+  document.querySelectorAll('#detail .lyr').forEach(b=>b.classList.toggle('on',b.dataset.l===layer));
+  document.getElementById('hint').innerHTML=HINT[layer];
+  const pv=document.getElementById('pv');
+  pv.innerHTML=curSite.cells.map(function(c,i){ return '<div class="cell'+(c.flag?' flag':'')+(curCell===i?' active':'')+'" data-i="'+i+'" style="background-color:'+colorFor(c)+'">'+cellVal(c)+'</div>'; }).join('');
+  pv.querySelectorAll('.cell').forEach(el=>el.onclick=function(){curCell=+el.dataset.i;paintGrid();renderVerdict();});
+  document.getElementById('legend').innerHTML=legendFor();
+}
+function legendFor(){
+  if(layer==='fused') return sw('#3a7c66')+'nominal '+sw('#caa54a')+'clean '+sw('#4a78a8')+'realign '+sw('#c0512e')+'service';
+  if(layer==='optical') return sw('#3b5566')+'clean mirrors '+sw('#caa54a')+'soiled '+sw('#6a86a0')+'aim suspect';
+  if(layer==='thermal') return sw('#3a7c66')+'on-target flux '+sw('#5b8fc4')+'cold / off-aim '+sw('#c0512e')+'receiver hot';
+  return sw('#3a7c66')+'at expected '+sw('#caa54a')+'down '+sw('#cf7a3a')+'down hard '+sw('#c0512e')+'critical · numbers = % below';
+}
+function sw(c){return '<span><span class="sw" style="background:'+c+'"></span></span>';}
+function renderVerdict(){
+  const v=document.getElementById('vbox');
+  if(curCell===null){v.innerHTML='<div class="empty">Select any tile to see its fused verdict.</div>';return;}
+  const c=curSite.cells[curCell];
+  if(!c.flag){v.innerHTML='<div class="verdict"><div class="pre">'+segName(curCell)+'</div><h3>Nominal — performing to expectation.</h3><div class="vline"><span class="src vsrc gr">receiver / HTF</span><span>Within tolerance of expected output.</span></div></div>';return;}
+  const f=c.flag;
+  v.innerHTML='<div class="verdict"><span class="fchip">fused · 3 sources agree</span><div class="pre">Fused verdict · '+f.label+'</div><h3>'+causeTitle(f.cause)+'</h3>'+
+    vline('opt','optical · mirror',f.opt)+vline('th','thermal · receiver & aim',f.th)+vline('gr','receiver/HTF · output',f.gr)+
+    '<div class="vact"><b>'+f.action+'.</b> '+f.act+'<div style="margin-top:5px;font-family:var(--mono);font-size:11px;color:#2f5d4d">\u2192 '+f.kwh+'</div></div></div>';
+}
+function vline(cls,src,txt){return '<div class="vline"><span class="src vsrc '+cls+'">'+src+'</span><span>'+txt+'</span></div>';}
+function causeTitle(c){ return c==='soiling'?'Soiling — clean it.':c==='mistrack'?'Mis-tracking — realign it.':'Receiver / HTF — service it.'; }
+function segName(i){ const rc=String.fromCharCode(65+Math.floor(i/GW))+'-'+String((i%GW)+1).padStart(2,'0'); return (curSite.type==='trough'?'Loop ':'Heliostat ')+rc; }
+selectSite('noor');
+document.getElementById('oenote').textContent='Illustrative demonstration · synthetic data, not a live monitoring feed. In solar thermal, heat is the product — so thermal reads receiver flux and field aim, not panel faults. The engine screens wide, fuses optical, thermal and receiver / HTF data, and resolves each segment to one action — clean, realign or service. The cost story is relative by design (share of field swept, visits avoided, output regained), never an absolute figure.';
+
+/* ---------------- ASSET SECURITY (build-out time-lapse) ---------------- */
+var AS_YEARS=[2018,2019,2020,2021,2022,2023,2024,2025];
+var AS_FRAC =[0,    0,   0.10, 0.55, 0.90, 1.0,  1.0,  1.0];
+var AS_CAP=['Undeveloped parcel — baseline imagery.','Site grading and access roads appear.','Mounting structures going in — first rows.',
+  'Array energised — roughly 55% installed.','Near-complete — about 90% coverage.','Full build-out; substation online.',
+  'Battery storage enclosure added.','New disturbance beyond the mapped boundary — flagged to verify.'];
+var AS_CHG=[{t:'Baseline established · undeveloped parcel',l:'base'},{t:'Ground disturbance · grading + access road',l:'info'},
+  {t:'Vertical structures · mounting frames detected',l:'info'},{t:'Rapid footprint growth · array ~55%, energised',l:'major'},
+  {t:'Continued build-out · ~90% coverage',l:'info'},{t:'Build-out complete · substation online',l:'info'},
+  {t:'New structure · battery storage enclosure',l:'info'},{t:'Disturbance beyond mapped boundary · verify',l:'review'}];
+var AS_TOTAL=240, AS_COLS=20, AS_ROWS=12;
+var asIdx=0, asTimer=null;
+
+function asScene(idx){
+  var f=AS_FRAC[idx], yr=AS_YEARS[idx], site=idx>=1;
+  var x0=70,y0=120,w=500,h=270, cw=w/AS_COLS, ch=h/AS_ROWS;
+  var built=Math.round(f*AS_TOTAL);
+  var s='<svg viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">';
+  s+='<defs><pattern id="grain" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.5" fill="rgba(255,255,255,0.04)"/></pattern></defs>';
+  // terrain
+  s+='<rect x="0" y="0" width="640" height="480" fill="#9c9067"/>';
+  s+='<rect x="0" y="0" width="640" height="480" fill="#8f8459" opacity="0.5"/>';
+  // scrub patches
+  s+='<circle cx="120" cy="60" r="28" fill="#827749" opacity="0.5"/><circle cx="540" cy="430" r="34" fill="#827749" opacity="0.45"/><circle cx="600" cy="90" r="22" fill="#827749" opacity="0.4"/>';
+  if(site){
+    // access road
+    s+='<rect x="0" y="238" width="70" height="14" fill="#c7b98f"/>';
+    // graded pad
+    s+='<rect x="'+(x0-6)+'" y="'+(y0-6)+'" width="'+(w+12)+'" height="'+(h+12)+'" rx="3" fill="#cdbf99"/>';
+    // perimeter fence
+    s+='<rect x="'+(x0-12)+'" y="'+(y0-12)+'" width="'+(w+24)+'" height="'+(h+24)+'" rx="4" fill="none" stroke="#6b6450" stroke-width="1.5" stroke-dasharray="6 4"/>';
+  }
+  // panels (row-major fill)
+  if(built>0){
+    var n=0;
+    for(var r=0;r<AS_ROWS && n<built;r++){
+      for(var c=0;c<AS_COLS && n<built;c++){
+        var px=x0+c*cw, py=y0+r*ch;
+        s+='<rect x="'+(px+1).toFixed(1)+'" y="'+(py+1).toFixed(1)+'" width="'+(cw-2).toFixed(1)+'" height="'+(ch-2).toFixed(1)+'" fill="#243441" stroke="rgba(120,150,170,0.25)" stroke-width="0.5"/>';
+        s+='<rect x="'+(px+1).toFixed(1)+'" y="'+(py+1).toFixed(1)+'" width="'+(cw-2).toFixed(1)+'" height="2" fill="rgba(150,180,200,0.3)"/>';
+        n++;
+      }
+    }
+  }
+  // substation 2023+
+  if(yr>=2023){ s+='<rect x="586" y="120" width="34" height="30" fill="#8c8c8c" stroke="#5a5a5a"/><line x1="586" y1="130" x2="620" y2="130" stroke="#5a5a5a" stroke-width="0.6"/><line x1="586" y1="140" x2="620" y2="140" stroke="#5a5a5a" stroke-width="0.6"/>'; }
+  // battery 2024+
+  if(yr>=2024){ s+='<rect x="586" y="158" width="34" height="20" fill="#4f6072"/>'; }
+  // phase-2 beyond boundary 2025
+  if(yr>=2025){
+    s+='<rect x="70" y="412" width="200" height="52" rx="3" fill="none" stroke="#c0512e" stroke-width="1.6" stroke-dasharray="5 4"/>';
+    for(var pr=0;pr<2;pr++){ for(var pc=0;pc<8;pc++){ s+='<rect x="'+(78+pc*22)+'" y="'+(420+pr*22)+'" width="18" height="18" fill="#243441" opacity="0.85"/>'; } }
+    s+='<text x="74" y="408" font-family="ui-monospace,monospace" font-size="11" fill="#c0512e">flagged · outside mapped boundary</text>';
+  }
+  // grain + compass + scale
+  s+='<rect x="0" y="0" width="640" height="480" fill="url(#grain)"/>';
+  s+='<g opacity="0.8"><line x1="610" y1="455" x2="610" y2="435" stroke="#eee" stroke-width="1.5"/><path d="M606 440 L610 433 L614 440 Z" fill="#eee"/><text x="603" y="470" font-family="ui-monospace,monospace" font-size="10" fill="#eee">N</text></g>';
+  s+='<g opacity="0.75"><rect x="30" y="452" width="60" height="3" fill="#eee"/><text x="30" y="448" font-family="ui-monospace,monospace" font-size="9" fill="#eee">1 km</text></g>';
+  s+='<text x="30" y="34" font-family="ui-monospace,monospace" font-size="13" fill="#f3efe6">'+yr+' · Kutch Solar Park</text>';
+  s+='</svg>';
+  return s;
+}
+function asKpi(l,v){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>';}
+function asRenderStats(idx){
+  var pct=Math.round(AS_FRAC[idx]*100); var flags=idx>=7?1:0;
+  document.getElementById('asstats').innerHTML=
+    asKpi('Monitored since','2018 <small>annual</small>')+asKpi('Plant energised','2021')+
+    asKpi('Build coverage',pct+' <small>%</small>')+asKpi('Open flags',flags+' <small>'+(flags?'verify':'none')+'</small>');
+}
+function asRenderChanges(idx){
+  document.getElementById('changes').innerHTML=AS_CHG.map(function(ch,i){
+    var cls='chg'+(i<=idx?' shown':'')+(i===idx?' cur':'');
+    return '<div class="'+cls+'"><div class="cy">'+AS_YEARS[i]+'</div><div><div class="ct">'+ch.t+'</div><span class="lv '+ch.l+'">'+ch.l+'</span></div></div>';
+  }).join('');
+}
+function asTicks(){
+  document.getElementById('ticks').innerHTML=AS_YEARS.map(function(y,i){
+    return '<button class="ytick'+(y===2021?' built':'')+'" data-i="'+i+'"><span class="dot"></span><span class="yl">'+y+'</span></button>';
+  }).join('');
+  document.querySelectorAll('.ytick').forEach(b=>b.onclick=function(){asStop();asSet(+b.dataset.i);});
+}
+function asSet(idx){
+  asIdx=idx;
+  document.getElementById('scene').innerHTML=asScene(idx);
+  document.getElementById('ascapyr').textContent=AS_YEARS[idx];
+  document.getElementById('ascaptx').textContent=AS_CAP[idx];
+  document.getElementById('tlfill').style.width=(idx/(AS_YEARS.length-1)*100)+'%';
+  document.querySelectorAll('.ytick').forEach(function(b){b.classList.toggle('on',+b.dataset.i===idx);});
+  asRenderStats(idx); asRenderChanges(idx);
+}
+function asStop(){ if(asTimer){clearInterval(asTimer);asTimer=null;} document.getElementById('play').textContent='\u25B6 Play 2018 \u2192 2025'; }
+function asPlay(){
+  if(asTimer){asStop();return;}
+  if(asIdx>=AS_YEARS.length-1) asSet(0);
+  document.getElementById('play').textContent='\u275A\u275A Pause';
+  asTimer=setInterval(function(){ if(asIdx>=AS_YEARS.length-1){asStop();return;} asSet(asIdx+1); },950);
+}
+asTicks(); asSet(0);
+document.getElementById('play').onclick=asPlay;
+
+/* ---------------- TOGGLE ---------------- */
+function showMode(m){
+  document.getElementById('oe').hidden=(m!=='oe');
+  document.getElementById('as').hidden=(m!=='as');
+  document.getElementById('m-oe').classList.toggle('on',m==='oe');
+  document.getElementById('m-as').classList.toggle('on',m==='as');
+  if(m!=='as') asStop();
+}
+document.getElementById('m-oe').onclick=function(){showMode('oe');};
+document.getElementById('m-as').onclick=function(){showMode('as');};
+</script>
+</body>
+</html>
